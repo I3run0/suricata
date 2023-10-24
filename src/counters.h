@@ -43,8 +43,8 @@ typedef struct StatsCounter_ {
     uint16_t gid;
 
     /* counter value(s): copies from the 'private' counter */
-    int64_t value;      /**< sum of updates/increments, or 'set' value */
-    uint64_t updates;   /**< number of updates (for avg) */
+    int64_t value;    /**< sum of updates/increments, or 'set' value */
+    uint64_t updates; /**< number of updates (for avg) */
 
     /* when using type STATS_TYPE_Q_FUNC this function is called once
      * to get the counter value, regardless of how many threads there are. */
@@ -121,6 +121,7 @@ void StatsReleaseResources(void);
 uint16_t StatsRegisterCounter(const char *, struct ThreadVars_ *);
 uint16_t StatsRegisterAvgCounter(const char *, struct ThreadVars_ *);
 uint16_t StatsRegisterMaxCounter(const char *, struct ThreadVars_ *);
+uint16_t StatsRegisterTmdCounter(const char *, struct ThreadVars_ *);
 uint16_t StatsRegisterGlobalCounter(const char *cname, uint64_t (*Func)(void));
 
 /* functions used to update local counter values */
@@ -135,21 +136,18 @@ uint64_t StatsGetLocalCounterValue(struct ThreadVars_ *, uint16_t);
 int StatsSetupPrivate(struct ThreadVars_ *);
 void StatsThreadCleanup(struct ThreadVars_ *);
 
-#define StatsSyncCounters(tv) \
-    StatsUpdateCounterArray(&(tv)->perf_private_ctx, &(tv)->perf_public_ctx);  \
+#define StatsSyncCounters(tv)                                                                      \
+    StatsUpdateCounterArray(&(tv)->perf_private_ctx, &(tv)->perf_public_ctx);
 
-#define StatsSyncCountersIfSignalled(tv)                                       \
-    do {                                                                        \
-        if ((tv)->perf_public_ctx.perf_flag == 1) {                             \
-            StatsUpdateCounterArray(&(tv)->perf_private_ctx,                   \
-                                     &(tv)->perf_public_ctx);                   \
-        }                                                                       \
+#define StatsSyncCountersIfSignalled(tv)                                                           \
+    do {                                                                                           \
+        if ((tv)->perf_public_ctx.perf_flag == 1) {                                                \
+            StatsUpdateCounterArray(&(tv)->perf_private_ctx, &(tv)->perf_public_ctx);              \
+        }                                                                                          \
     } while (0)
 
 #ifdef BUILD_UNIX_SOCKET
-TmEcode StatsOutputCounterSocket(json_t *cmd,
-                                 json_t *answer, void *data);
+TmEcode StatsOutputCounterSocket(json_t *cmd, json_t *answer, void *data);
 #endif
 
 #endif /* __COUNTERS_H__ */
-
